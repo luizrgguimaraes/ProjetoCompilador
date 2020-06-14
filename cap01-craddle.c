@@ -25,12 +25,20 @@ void match(char c);
 char getName();
 char getNum();
 void emit(char *fmt, ...);
+void expression();
+void factor();
+void term();
+void multiply();
+void divide();
+void add();
+void subtract();
+int isAddOp(char c);
 
 /* PROGRAMA PRINCIPAL */
 int main()
 {
     init();
-
+	expression();
     return 0;
 }
 
@@ -38,6 +46,107 @@ int main()
 void init()
 {
     nextChar();
+}
+
+
+
+
+
+
+void sinal(){
+	if(look == '-'){
+		match('-');
+		emit("XOR AX, AX");
+	}
+
+
+}
+
+void factor(){
+	sinal();
+	if(look == '('){
+		match('(');
+		expression();
+		match(')');
+	}else{
+		//sinal();
+		emit("MOV AX, %c", getNum());
+
+	}
+}
+
+void term(){
+	factor();
+	while(look == '*' || look == '/'){
+		emit("PUSH AX");
+		switch(look){
+			case '*':
+				multiply();
+				break;
+			case '-':
+				divide();
+				break;
+			default:
+				expected("MulOp");
+				break;
+
+		}
+	}
+}
+
+void expression(){
+	//if(isAddOp(look))
+	//	emit("XOR AX, AX");
+	//else	
+	term();
+	while(look == '+' || look == '-'){
+		emit("PUSH AX");
+		switch(look){
+			case '+':
+				add();
+				break;
+			case '-':
+				subtract();
+				break;
+			default:
+				expected("AddOp");
+				break;
+
+		}
+	}
+}
+
+void multiply(){
+	match('*');
+	factor();
+	emit("POP BX");
+	emit("IMUL BX");
+}
+
+void divide(){
+	match('/');
+	factor();
+	emit("POP BX");
+	emit("XCHG AX, BX");
+	emit("CWD");
+	emit("IDIV BX");
+}
+void add(){
+	match('+');
+	term();
+	emit("POP BX");
+	emit("ADD AX, BX");
+}
+void subtract(){
+	match('-');
+	term();
+	emit("POP BX");
+	emit("SUB AX, BX");
+	emit("NEG AX");
+}
+
+int isAddOp(char c){
+	return (c == '+' || c == '-');
 }
 
 /* lê próximo caracter da entrada */
